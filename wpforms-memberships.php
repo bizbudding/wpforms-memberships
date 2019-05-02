@@ -64,7 +64,7 @@ final class BB_WPForms_Memberships {
 	 */
 	public function __clone() {
 		// Cloning instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'textdomain' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'wpforms-memberships' ), '1.0' );
 	}
 
 	/**
@@ -76,7 +76,7 @@ final class BB_WPForms_Memberships {
 	 */
 	public function __wakeup() {
 		// Unserializing instances of the class is forbidden.
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'textdomain' ), '1.0' );
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?', 'wpforms-memberships' ), '1.0' );
 	}
 
 	/**
@@ -170,7 +170,7 @@ final class BB_WPForms_Memberships {
 		}
 
 		// Setup the updater.
-		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/wpforms-memberships/', __FILE__, 'textdomain' );
+		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/wpforms-memberships/', __FILE__, 'wpforms-memberships' );
 	}
 
 	/**
