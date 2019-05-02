@@ -14,36 +14,36 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Main WPForms_Woo_Memberships Class.
+ * Main BB_WPForms_Memberships Class.
  *
  * @since 0.1.0
  */
-final class WPForms_Woo_Memberships {
+final class BB_WPForms_Memberships {
 
 	/**
-	 * @var   WPForms_Woo_Memberships The one true WPForms_Woo_Memberships
+	 * @var   BB_WPForms_Memberships The one true BB_WPForms_Memberships
 	 * @since 0.1.0
 	 */
 	private static $instance;
 
 	/**
-	 * Main WPForms_Woo_Memberships Instance.
+	 * Main BB_WPForms_Memberships Instance.
 	 *
-	 * Insures that only one instance of WPForms_Woo_Memberships exists in memory at any one
+	 * Insures that only one instance of BB_WPForms_Memberships exists in memory at any one
 	 * time. Also prevents needing to define globals all over the place.
 	 *
 	 * @since   0.1.0
 	 * @static  var array $instance
-	 * @uses    WPForms_Woo_Memberships::setup_constants() Setup the constants needed.
-	 * @uses    WPForms_Woo_Memberships::includes() Include the required files.
-	 * @uses    WPForms_Woo_Memberships::hooks() Activate, deactivate, etc.
-	 * @see     WPForms_Woo_Memberships()
-	 * @return  object | WPForms_Woo_Memberships The one true WPForms_Woo_Memberships
+	 * @uses    BB_WPForms_Memberships::setup_constants() Setup the constants needed.
+	 * @uses    BB_WPForms_Memberships::includes() Include the required files.
+	 * @uses    BB_WPForms_Memberships::hooks() Activate, deactivate, etc.
+	 * @see     BB_WPForms_Memberships()
+	 * @return  object | BB_WPForms_Memberships The one true BB_WPForms_Memberships
 	 */
 	public static function instance() {
 		if ( ! isset( self::$instance ) ) {
 			// Setup the setup
-			self::$instance = new WPForms_Woo_Memberships;
+			self::$instance = new BB_WPForms_Memberships;
 			// Methods
 			self::$instance->setup_constants();
 			self::$instance->includes();
@@ -170,7 +170,7 @@ final class WPForms_Woo_Memberships {
 		}
 
 		// Setup the updater.
-		// $updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/starter-plugin/', __FILE__, 'textdomain' );
+		$updater = Puc_v4_Factory::buildUpdateChecker( 'https://github.com/bizbudding/wpforms-memberships/', __FILE__, 'textdomain' );
 	}
 
 	/**
@@ -185,23 +185,23 @@ final class WPForms_Woo_Memberships {
 }
 
 /**
- * The main function for that returns WPForms_Woo_Memberships
+ * The main function for that returns BB_WPForms_Memberships
  *
- * The main function responsible for returning the one true WPForms_Woo_Memberships
+ * The main function responsible for returning the one true BB_WPForms_Memberships
  * Instance to functions everywhere.
  *
  * Use this function like you would a global variable, except without needing
  * to declare the global.
  *
- * Example: <?php $plugin = WPForms_Woo_Memberships(); ?>
+ * Example: <?php $plugin = BB_WPForms_Memberships(); ?>
  *
  * @since 0.1.0
  *
- * @return object|WPForms_Woo_Memberships The one true WPForms_Woo_Memberships Instance.
+ * @return object|BB_WPForms_Memberships The one true BB_WPForms_Memberships Instance.
  */
-function WPForms_Woo_Memberships() {
-	return WPForms_Woo_Memberships::instance();
+function BB_WPForms_Memberships() {
+	return BB_WPForms_Memberships::instance();
 }
 
-// Get WPForms_Woo_Memberships Running.
-WPForms_Woo_Memberships();
+// Get BB_WPForms_Memberships Running.
+BB_WPForms_Memberships();

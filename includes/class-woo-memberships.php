@@ -271,5 +271,9 @@ class BB_WPForms_Memberships_Settings {
 
 // Initiate the membership settings.
 add_action( 'init', function() {
+	// Bail if WP Forms is not active.
+	if ( ! function_exists( 'wpforms' ) ) {
+		return;
+	}
 	new BB_WPForms_Memberships_Settings;
 });
