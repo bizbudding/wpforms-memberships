@@ -1,5 +1,5 @@
 # WP Forms Memberships
-Allow successful WP Forms submissions to add users to WooCommerce Memberships.
+Add users to WooCommerce Memberships with WPForms.
 
 ![Memberships settings field](assets/images/field.png "")
 
