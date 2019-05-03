@@ -16,11 +16,13 @@ class BB_WPForms_Memberships_Settings {
 	 * @since  0.1.0
 	 */
 	public function __construct() {
-		add_filter( 'wpforms_builder_settings_sections',   array( $this, 'settings_section' ), 20, 2 );
-		add_filter( 'wpforms_form_settings_panel_content', array( $this, 'settings_section_content' ), 20 );
-		add_filter( 'wpforms_process_before_form_data',    array( $this, 'maybe_bypass_registration' ), 10, 2 );
-		add_action( 'wpforms_user_registered',             array( $this, 'add_new_user_to_membership' ), 10, 4 );
-		add_action( 'wpforms_process_complete',            array( $this, 'add_logged_in_user_to_membership' ), 10, 4 );
+		add_filter( 'wpforms_builder_settings_sections',         array( $this, 'settings_section' ), 20, 2 );
+		add_filter( 'wpforms_form_settings_panel_content',       array( $this, 'settings_section_content' ), 20 );
+		add_filter( 'wpforms_user_registration_username_exists', array( $this, 'add_login_link_to_error' ), 99 );
+		add_filter( 'wpforms_user_registration_email_exists',    array( $this, 'add_login_link_to_error' ), 99 );
+		add_filter( 'wpforms_process_before_form_data',          array( $this, 'maybe_bypass_registration' ), 10, 2 );
+		add_action( 'wpforms_user_registered',                   array( $this, 'add_new_user_to_membership' ), 10, 4 );
+		add_action( 'wpforms_process_complete',                  array( $this, 'add_logged_in_user_to_membership' ), 10, 4 );
 	}
 
 	/**
@@ -87,36 +89,20 @@ class BB_WPForms_Memberships_Settings {
 			);
 
 			// If Registration form.
-			// if ( isset( $instance->form_data['meta']['template'] ) && ( 'user_registration' === $instance->form_data['meta']['template'] ) ) {
+			if ( isset( $instance->form_data['meta']['template'] ) && ( 'user_registration' === $instance->form_data['meta']['template'] ) ) {
 
-			// 	$form_options = array();
+				// Bypass registration.
+				wpforms_panel_field(
+					'checkbox',
+					'settings',
+					'bb_registration_bypass',
+					$instance->form_data,
+					__( 'Bypass registration if user is logged in', 'wpforms-memberships' )
+				);
+				// Note.
+				echo '<p style="font-size:90%;margin-left:26px;margin-top:-12px;">' . __( 'This allows a logged in user to be added to memberships via this registration form.', 'wpforms-memberships'  ) . '</p>';
 
-			// 	// Get forms.
-			// 	$forms = wpforms()->form->get();
-			// 	if ( ! empty( $forms ) ) {
-			// 		$form_options[''] = __( '--- Choose Membership Form ---', 'wpforms-memberships' );
-			// 		foreach ( $forms as $form ) {
-			// 			// Skip if the form we're on.
-			// 			if ( $form->ID === $instance->form->ID ) {
-			// 				continue;
-			// 			}
-			// 			$form_options[ $form->ID ] = esc_html( $form->post_title );
-			// 		}
-			// 	}
-
-			// 	// Membership form.
-			// 	wpforms_panel_field(
-			// 		'select',
-			// 		'settings',
-			// 		'bb_membership_form',
-			// 		$instance->form_data,
-			// 		__( 'Membership form if user account exists.', 'wpforms-memberships' ),
-			// 		array(
-			// 			'options' => $form_options,
-			// 		)
-			// 	);
-
-			// }
+			}
 
 		echo '</div>';
 
@@ -170,6 +156,20 @@ class BB_WPForms_Memberships_Settings {
 	}
 
 	/**
+	 * Add login link with redirect if trying to register a user that already exists.
+	 *
+	 * @since   0.2.0
+	 *
+	 * @return  string  New message.
+	 */
+	function add_login_link_to_error( $message ) {
+		// Current URL with any query params.
+		$redirect    = home_url( add_query_arg( null, null ) );
+		$new_message = sprintf( '&nbsp;<a href="%s">%s</a>', wp_login_url( $redirect ), __( 'Log in?', 'wpforms-memberships' ) );
+		return $message . $new_message;
+	}
+
+	/**
 	 * Add newly created user to the membership.
 	 *
 	 * @since   0.2.0
@@ -178,13 +178,18 @@ class BB_WPForms_Memberships_Settings {
 	 */
 	function maybe_bypass_registration( $form_data, $entry ) {
 
-		// Bail if user is not logged in.
-		if ( ! is_user_logged_in() ) {
+		// Bail if not a User Registration form.
+		if ( 'user_registration' !== $form_data['meta']['template'] ) {
 			return $form_data;
 		}
 
-		// Bail if not a User Registration form.
-		if ( 'user_registration' !== $form_data['meta']['template'] ) {
+		// Bail if no memberships.
+		if ( ! $this->has_plan_ids( $form_data ) ) {
+			return $form_data;
+		}
+
+		// Bail if user is not logged in.
+		if ( ! is_user_logged_in() ) {
 			return $form_data;
 		}
 
@@ -212,6 +217,11 @@ class BB_WPForms_Memberships_Settings {
 	 */
 	function add_new_user_to_membership( $user_id, $fields, $form_data, $userdata ) {
 
+		// Bail if no memberships.
+		if ( ! $this->has_plan_ids( $form_data ) ) {
+			return;
+		}
+
 		// Get plan IDs.
 		$plan_ids = $this->get_valid_plan_ids( $form_data );
 
@@ -220,19 +230,8 @@ class BB_WPForms_Memberships_Settings {
 			return;
 		}
 
-		foreach( $plan_ids as $plan_id ) {
-
-			// Skip if user is already a member.
-			if ( wc_memberships_is_user_member( $user_id, $plan_id ) ) {
-				continue;
-			}
-			// Add the user to the membership.
-			wc_memberships_create_user_membership( array(
-				'plan_id' => $plan_id,
-				'user_id' => $user_id,
-			) );
-		}
-
+		// Add.
+		$this->add_user_to_memberships( $user_id, $plan_ids );
 	}
 
 	/**
@@ -244,13 +243,18 @@ class BB_WPForms_Memberships_Settings {
 	 */
 	function add_logged_in_user_to_membership( $fields, $entry, $form_data, $entry_id ) {
 
-		// Bail if this is a registration form, that uses its own hook.
+		// Bail if this is a registration form, since it uses its own hook.
 		if ( ! isset( $form_data['meta']['template'] ) || ( 'user_registration' === $form_data['meta']['template'] ) ) {
 			return;
 		}
 
 		// Bail if user not logged in.
 		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		// Bail if no memberships.
+		if ( ! $this->has_plan_ids( $form_data ) ) {
 			return;
 		}
 
@@ -264,8 +268,20 @@ class BB_WPForms_Memberships_Settings {
 
 		$user_id = get_current_user_id();
 
-		foreach( $plan_ids as $plan_id ) {
+		// Add.
+		$this->add_user_to_memberships( $user_id, $plan_ids );
+	}
 
+	/**
+	 * Add user to memberships.
+	 * Must be validated prior.
+	 *
+	 * @since   0.2.0
+	 *
+	 * @return  void
+	 */
+	function add_user_to_memberships( $user_ids, $plan_ids ) {
+		foreach( $plan_ids as $plan_id ) {
 			// Skip if user is already a member.
 			if ( wc_memberships_is_user_member( $user_id, $plan_id ) ) {
 				continue;
@@ -290,11 +306,6 @@ class BB_WPForms_Memberships_Settings {
 		// Validated plan IDs.
 		$plan_ids = array();
 
-		// Bail if no memberships.
-		if ( ! isset( $form_data['settings']['bb_woocommerce_memberships'] ) || empty( $form_data['settings']['bb_woocommerce_memberships'] ) ) {
-			return $plan_ids;
-		}
-
 		// Build array of plan IDs.
 		$ids = array_filter( array_map( 'trim', explode( ',', sanitize_text_field( $form_data['settings']['bb_woocommerce_memberships'] ) ) ) );
 
@@ -308,6 +319,17 @@ class BB_WPForms_Memberships_Settings {
 		}
 
 		return $plan_ids;
+	}
+
+	/**
+	 * Check if form data has plan IDs.
+	 *
+	 * @since   0.2.0
+	 *
+	 * @return  bool
+	 */
+	function has_plan_ids( $form_data ) {
+		return ( ! isset( $form_data['settings']['bb_woocommerce_memberships'] ) || empty( $form_data['settings']['bb_woocommerce_memberships'] ) );
 	}
 
 }
