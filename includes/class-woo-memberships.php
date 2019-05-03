@@ -120,6 +120,16 @@ class BB_WPForms_Memberships_Settings {
 		echo '</div>';
 
 		?>
+		<style>
+			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_membership-wrap {
+				margin-bottom: 0;
+			}
+			#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_woocommerce_memberships {
+				margin: 0;
+				border-top: none;
+				opacity: .5;
+			}
+		</style>
 		<script>
 			jQuery(document).ready(function($) {
 				// Get our inputs.
@@ -127,8 +137,6 @@ class BB_WPForms_Memberships_Settings {
 				var $select = $( '#bb-membership-plans' );
 				// Set input to readonly.
 				$input.prop( 'readonly', true );
-				// Set input to hidden.
-				// $input.prop( 'hidden', true );
 				// Set select field to multiple.
 				$select.prop( 'multiple', true );
 				// Start with empty selected items.
