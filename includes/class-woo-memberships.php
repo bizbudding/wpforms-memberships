@@ -163,6 +163,10 @@ class BB_WPForms_Memberships_Settings {
 	 * @return  string  New message.
 	 */
 	function add_login_link_to_error( $message ) {
+		// Bail if user is logged in.
+		if ( is_user_logged_in() ) {
+			return $message;
+		}
 		// Current URL with any query params.
 		$redirect    = home_url( add_query_arg( null, null ) );
 		$new_message = sprintf( '&nbsp;<a href="%s">%s</a>', wp_login_url( $redirect ), __( 'Log in?', 'wpforms-memberships' ) );
