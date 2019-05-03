@@ -18,6 +18,7 @@ class BB_WPForms_Memberships_Settings {
 	public function __construct() {
 		add_filter( 'wpforms_builder_settings_sections',   array( $this, 'settings_section' ), 20, 2 );
 		add_filter( 'wpforms_form_settings_panel_content', array( $this, 'settings_section_content' ), 20 );
+		add_filter( 'wpforms_process_before_form_data',    array( $this, 'maybe_bypass_registration' ), 10, 2 );
 		add_action( 'wpforms_user_registered',             array( $this, 'add_new_user_to_membership' ), 10, 4 );
 		add_action( 'wpforms_process_complete',            array( $this, 'add_logged_in_user_to_membership' ), 10, 4 );
 	}
@@ -171,6 +172,40 @@ class BB_WPForms_Memberships_Settings {
 	/**
 	 * Add newly created user to the membership.
 	 *
+	 * @since   0.2.0
+	 *
+	 * @return  array  The form data.
+	 */
+	function maybe_bypass_registration( $form_data, $entry ) {
+
+		// Bail if user is not logged in.
+		if ( ! is_user_logged_in() ) {
+			return $form_data;
+		}
+
+		// Bail if not a User Registration form.
+		if ( 'user_registration' !== $form_data['meta']['template'] ) {
+			return $form_data;
+		}
+
+		// Get plan IDs.
+		$plan_ids = $this->get_valid_plan_ids( $form_data );
+
+		// Bail if no validated plan IDs.
+		if ( empty( $plan_ids ) ) {
+			return $form_data;
+		}
+
+		// Set template as blank so no registration processes are triggered.
+		$form_data['meta']['template'] = 'blank';
+
+		return $form_data;
+
+	}
+
+	/**
+	 * Add newly created user to the membership.
+	 *
 	 * @since   0.1.0
 	 *
 	 * @return  void
@@ -178,7 +213,7 @@ class BB_WPForms_Memberships_Settings {
 	function add_new_user_to_membership( $user_id, $fields, $form_data, $userdata ) {
 
 		// Get plan IDs.
-		$plan_ids = $this->get_plan_ids_from_data( $form_data );
+		$plan_ids = $this->get_valid_plan_ids( $form_data );
 
 		// Bail if no validated plan IDs.
 		if ( empty( $plan_ids ) ) {
@@ -220,7 +255,7 @@ class BB_WPForms_Memberships_Settings {
 		}
 
 		// Get plan IDs.
-		$plan_ids = $this->get_plan_ids_from_data( $form_data );
+		$plan_ids = $this->get_valid_plan_ids( $form_data );
 
 		// Bail if no validated plan IDs.
 		if ( empty( $plan_ids ) ) {
@@ -250,7 +285,7 @@ class BB_WPForms_Memberships_Settings {
 	 *
 	 * @return  array  The plan IDs.
 	 */
-	function get_plan_ids_from_data( $form_data ) {
+	function get_valid_plan_ids( $form_data ) {
 
 		// Validated plan IDs.
 		$plan_ids = array();
