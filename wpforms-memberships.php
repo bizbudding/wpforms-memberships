@@ -4,7 +4,7 @@
  * Plugin Name:     WPForms WooCommerce Registration
  * Plugin URI:      https://bizbudding.com
  * Description:     Add users to WooCommerce Memberships with WPForms.
- * Version:         0.1.0
+ * Version:         0.2.0
  *
  * Author:          BizBudding, Mike Hemberger
  * Author URI:      https://bizbudding.com
@@ -90,7 +90,7 @@ final class BB_WPForms_Memberships {
 
 		// Plugin version.
 		if ( ! defined( 'WPFORMS_WOO_MEMBERSHIPS_VERSION' ) ) {
-			define( 'WPFORMS_WOO_MEMBERSHIPS_VERSION', '0.1.0' );
+			define( 'WPFORMS_WOO_MEMBERSHIPS_VERSION', '0.2.0' );
 		}
 
 		// Plugin Folder Path.
