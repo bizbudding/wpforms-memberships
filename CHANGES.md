@@ -1,7 +1,10 @@
 # Changelog
 
+## 0.3.1 (5/16/19)
+* Fixed: Prefill and make the email field readonly when bypassing registration for logged in users.
+
 ## 0.3.0 (5/16/19)
-* Fixed: Hide and disable username and password fields when they are used on registration forms.
+* Fixed: Hide and disable username and password fields when bypassing registration for logged in users.
 
 ## 0.2.1 (5/3/19)
 * Fixed: Only show log in link if user is logged out.

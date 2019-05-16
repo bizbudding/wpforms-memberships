@@ -216,6 +216,13 @@ class BB_WPForms_Memberships_Settings {
 		$properties['inputs']['primary']['attr']['value'] = $current_user->user_email;
 		// Set the readonly propery.
 		$properties['inputs']['primary']['attr']['readonly'] = 'readonly';
+		// If email confirm field.
+		if ( isset( $properties['inputs']['secondary'] ) ) {
+			// Set the current logged in user's email as the field value.
+			$properties['inputs']['secondary']['attr']['value'] = $current_user->user_email;
+			// Set the readonly propery.
+			$properties['inputs']['secondary']['attr']['readonly'] = 'readonly';
+		}
 		return $properties;
 	}
 
