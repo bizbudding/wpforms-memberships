@@ -20,7 +20,10 @@ class BB_WPForms_Memberships_Settings {
 		add_filter( 'wpforms_form_settings_panel_content',       array( $this, 'settings_section_content' ), 20 );
 		add_filter( 'wpforms_user_registration_username_exists', array( $this, 'add_login_link_to_error' ), 99 );
 		add_filter( 'wpforms_user_registration_email_exists',    array( $this, 'add_login_link_to_error' ), 99 );
-		add_filter( 'wpforms_process_before_form_data',          array( $this, 'maybe_bypass_registration' ), 10, 2 );
+		add_filter( 'wpforms_field_properties_email',            array( $this, 'maybe_modify_email_field' ), 10, 3 );
+		add_filter( 'wpforms_field_properties_text',             array( $this, 'maybe_modify_username_field' ), 10, 3 );
+		add_filter( 'wpforms_field_properties_password',         array( $this, 'maybe_modify_password_field' ), 10, 3 );
+		add_filter( 'wpforms_process_before_form_data',          array( $this, 'maybe_bypass_processing' ), 10, 2 );
 		add_action( 'wpforms_user_registered',                   array( $this, 'add_new_user_to_membership' ), 10, 4 );
 		add_action( 'wpforms_process_complete',                  array( $this, 'add_logged_in_user_to_membership' ), 10, 4 );
 	}
@@ -100,7 +103,7 @@ class BB_WPForms_Memberships_Settings {
 					__( 'Bypass registration if user is logged in', 'wpforms-memberships' )
 				);
 				// Note.
-				echo '<p style="font-size:90%;margin-left:26px;margin-top:-12px;">' . __( 'This allows a logged in user to be added to memberships via this registration form.', 'wpforms-memberships'  ) . '</p>';
+				echo '<p style="font-size:100%;margin-left:26px;margin-top:-12px;">' . __( 'This makes the email field readonly, removes the registration username/password fields, and allows a user to be added to memberships via this registration form if they are already logged in.', 'wpforms-memberships'  ) . '</p>';
 
 			}
 
@@ -160,6 +163,8 @@ class BB_WPForms_Memberships_Settings {
 	 *
 	 * @since   0.2.0
 	 *
+	 * @param   string  The existing message.
+	 *
 	 * @return  string  New message.
 	 */
 	function add_login_link_to_error( $message ) {
@@ -174,42 +179,129 @@ class BB_WPForms_Memberships_Settings {
 	}
 
 	/**
-	 * Add newly created user to the membership.
+	 * Set the default value of the email field, and make it readonly.
+	 *
+	 * @since   0.3.0
+	 *
+	 * @param   array  $properties  The field properties.
+	 * @param   array  $field       The field data.
+	 * @param   array  $form_data   The form data.
+	 *
+	 * @return  array  The modified field properties.
+	 */
+	function maybe_modify_email_field( $properties, $field, $form_data ) {
+		// Bail if not bypassing this form.
+		if ( ! $this->is_bypass( $form_data ) ) {
+			return $properties;
+		}
+		// Get current user.
+		$current_user = wp_get_current_user();
+		// Bail if current user does not exist.
+		if ( ! $current_user->exists() ) {
+			return $properties;
+		}
+		// Skip if field does not have the meta we need.
+		if ( ! ( isset( $field['meta']['nickname'] ) && isset( $field['meta']['delete'] ) ) ) {
+			return $properties;
+		}
+		// Skip if the nickname is not email.
+		if ( 'email' !== $field['meta']['nickname'] ) {
+			return $properties;
+		}
+		// Skip if deleting is not disabled.
+		if ( $field['meta']['delete'] ) {
+			return $properties;
+		}
+		// Set the current logged in user's email as the field value.
+		$properties['inputs']['primary']['attr']['value'] = $current_user->user_email;
+		// Set the readonly propery.
+		$properties['inputs']['primary']['attr']['readonly'] = 'readonly';
+		return $properties;
+	}
+
+	/**
+	 * Hide and make the username field not required.
+	 *
+	 * @since   0.3.0
+	 *
+	 * @param   array  $properties  The field properties.
+	 * @param   array  $field       The field data.
+	 * @param   array  $form_data   The form data.
+	 *
+	 * @return  array  The modified field properties.
+	 */
+	function maybe_modify_username_field( $properties, $field, $form_data ) {
+		// If not the username field.
+		if ( ! ( isset( $form_data['settings']['registration_username'] ) && isset( $form_data['fields'][ $form_data['settings']['registration_username'] ] ) ) ) {
+			return $properties;
+		}
+		// Bail if not bypassing this form.
+		if ( ! $this->is_bypass( $form_data ) ) {
+			return $properties;
+		}
+		// Set as not required.
+		$properties['label']['required'] = '';
+		$properties['inputs']['primary']['required'] = '';
+		// Hide the field.
+		$properties['container']['attr']['style'] = 'display:none;';
+		return $properties;
+	}
+
+	/**
+	 * Hide and make the password field not required.
+	 *
+	 * @since   0.3.0
+	 *
+	 * @param   array  $properties  The field properties.
+	 * @param   array  $field       The field data.
+	 * @param   array  $form_data   The form data.
+	 *
+	 * @return  array  The modified field properties.
+	 */
+	function maybe_modify_password_field( $properties, $field, $form_data ) {
+		// If not the password field.
+		if ( ! ( isset( $form_data['settings']['registration_password'] ) && isset( $form_data['fields'][ $form_data['settings']['registration_password'] ] ) ) ) {
+			return $properties;
+		}
+		// Bail if not bypassing this form.
+		if ( ! $this->is_bypass( $form_data ) ) {
+			return $properties;
+		}
+		// Set as not required.
+		$properties['label']['required'] = '';
+		$properties['inputs']['primary']['required'] = '';
+		if ( isset( $properties['inputs']['secondary'] ) ) {
+			$properties['inputs']['secondary']['required'] = '';
+		}
+		// Hide the field.
+		$properties['container']['attr']['style'] = 'display:none;';
+		return $properties;
+	}
+
+	/**
+	 * Set the template as blank instead of user registration.
+	 * Bypass username and password fields by making them not required during processing.
 	 *
 	 * @since   0.2.0
 	 *
 	 * @return  array  The form data.
 	 */
-	function maybe_bypass_registration( $form_data, $entry ) {
-
-		// Bail if not a User Registration form.
-		if ( 'user_registration' !== $form_data['meta']['template'] ) {
+	function maybe_bypass_processing( $form_data, $entry ) {
+		// Bail if not bypassing this form.
+		if ( ! $this->is_bypass( $form_data ) ) {
 			return $form_data;
 		}
-
-		// Bail if no memberships.
-		if ( ! $this->has_plan_ids( $form_data ) ) {
-			return $form_data;
-		}
-
-		// Bail if user is not logged in.
-		if ( ! is_user_logged_in() ) {
-			return $form_data;
-		}
-
-		// Get plan IDs.
-		$plan_ids = $this->get_valid_plan_ids( $form_data );
-
-		// Bail if no validated plan IDs.
-		if ( empty( $plan_ids ) ) {
-			return $form_data;
-		}
-
 		// Set template as blank so no registration processes are triggered.
 		$form_data['meta']['template'] = 'blank';
-
+		// Username.
+		if ( isset( $form_data['settings']['registration_username'] ) && isset( $form_data['fields'][ $form_data['settings']['registration_username'] ] ) ) {
+			$form_data['fields'][ $form_data['settings']['registration_username'] ]['required'] = '0';
+		}
+		// Password.
+		if ( isset( $form_data['settings']['registration_password'] ) && isset( $form_data['fields'][ $form_data['settings']['registration_password'] ] ) ) {
+			$form_data['fields'][ $form_data['settings']['registration_password'] ]['required'] = '0';
+		}
 		return $form_data;
-
 	}
 
 	/**
@@ -284,7 +376,7 @@ class BB_WPForms_Memberships_Settings {
 	 *
 	 * @return  void
 	 */
-	function add_user_to_memberships( $user_ids, $plan_ids ) {
+	function add_user_to_memberships( $user_id, $plan_ids ) {
 		foreach( $plan_ids as $plan_id ) {
 			// Skip if user is already a member.
 			if ( wc_memberships_is_user_member( $user_id, $plan_id ) ) {
@@ -296,6 +388,39 @@ class BB_WPForms_Memberships_Settings {
 				'user_id' => $user_id,
 			) );
 		}
+	}
+
+	/**
+	 * Check if the form is one to be bypassed.
+	 *
+	 * @since   0.3.0
+	 *
+	 * @return  bool
+	 */
+	function is_bypass( $form_data ) {
+		// Bail if not a User Registration form.
+		if ( ! isset( $form_data['meta']['template'] ) || ( 'user_registration' !== $form_data['meta']['template'] ) ) {
+			return false;
+		}
+		// If form is not set for registration bypass.
+		if ( ! ( isset( $form_data['settings']['bb_registration_bypass'] ) && $form_data['settings']['bb_registration_bypass'] ) ) {
+			return false;
+		}
+		// Bail if user is not logged in.
+		if ( ! is_user_logged_in() ) {
+			return false;
+		}
+		// Bail if no memberships.
+		if ( ! $this->has_plan_ids( $form_data ) ) {
+			return false;
+		}
+		// Get plan IDs.
+		$plan_ids = $this->get_valid_plan_ids( $form_data );
+		// Bail if no validated plan IDs.
+		if ( empty( $plan_ids ) ) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -333,7 +458,7 @@ class BB_WPForms_Memberships_Settings {
 	 * @return  bool
 	 */
 	function has_plan_ids( $form_data ) {
-		return ( ! isset( $form_data['settings']['bb_woocommerce_memberships'] ) || empty( $form_data['settings']['bb_woocommerce_memberships'] ) );
+		return ( isset( $form_data['settings']['bb_woocommerce_memberships'] ) && $form_data['settings']['bb_woocommerce_memberships'] );
 	}
 
 }
