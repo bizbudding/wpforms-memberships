@@ -174,14 +174,19 @@ class BB_WPForms_Memberships_Settings {
 		</style>
 		<script>
 			jQuery(document).ready(function($) {
+
 				// Get our inputs.
 				var $wooInput        = $( '#wpforms-panel-field-settings-bb_woocommerce_memberships' );
 				var $wooSelect       = $( '#bb-membership-plans' );
 				var $learndashInput  = $( '#wpforms-panel-field-settings-bb_learndash_courses' );
 				var $learndashSelect = $( '#bb-learndash-courses' );
 
-				doMembershipStuff( $wooInput, $wooSelect );
-				doMembershipStuff( $learndashInput, $learndashSelect );
+				if ( $wooInput.length && $wooSelect.length ) {
+					doMembershipStuff( $wooInput, $wooSelect );
+				}
+				if ( $learndashInput.length && $learndashSelect.length ) {
+					doMembershipStuff( $learndashInput, $learndashSelect );
+				}
 
 				function doMembershipStuff( $input, $select ) {
 					// Set input to readonly.
