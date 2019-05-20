@@ -57,17 +57,19 @@ class BB_WPForms_Memberships_Settings {
 			wp_enqueue_script( 'chosen', WPFORMS_WOO_MEMBERSHIPS_URL . 'vendor/harvesthq/chosen/chosen.jquery.min.js', array( 'jquery' ), '1.8.7', true );
 			wp_enqueue_style( 'chosen', WPFORMS_WOO_MEMBERSHIPS_URL . 'vendor/harvesthq/chosen/chosen.min.css', array(), '1.8.7' );
 
-			// Get saved plan IDs.
-			$plan_ids = array();
-			if ( isset( $instance->settings['bb_woocommerce_membership_ids'] ) && ! empty( $instance->settings['bb_woocommerce_membership_ids'] ) ) {
-				$plan_ids = array_filter( array_map( 'trim', explode( ',', sanitize_text_field( $instance->settings['bb_woocommerce_membership_ids'] ) ) ) );
-			}
-			?>
-			<div id="wpforms-panel-field-settings-bb_woocommerce_membership-wrap" class="wpforms-panel-field  wpforms-panel-field-select">
-				<label for="wpforms-panel-field-settings-bb_woocommerce_membership"><?php echo __( 'WooCommerce Memberships', 'wpforms-memberships' ); ?></label>
-				<select id="bb-membership-plans" data-placeholder="Choose Membership(s)..." multiple class="chosen-select">
-					<?php
-					if ( function_exists( 'wc_memberships_get_membership_plans' ) ) {
+			// If Woo Memberships is active.
+			if ( function_exists( 'wc_memberships_get_membership_plans' ) ) {
+
+				// Get saved plan IDs.
+				$plan_ids = array();
+				if ( isset( $instance->settings['bb_woocommerce_membership_ids'] ) && ! empty( $instance->settings['bb_woocommerce_membership_ids'] ) ) {
+					$plan_ids = array_filter( array_map( 'trim', explode( ',', sanitize_text_field( $instance->settings['bb_woocommerce_membership_ids'] ) ) ) );
+				}
+				?>
+				<div id="wpforms-panel-field-settings-bb_woocommerce_memberships-wrap" class="wpforms-panel-field  wpforms-panel-field-select">
+					<label for="wpforms-panel-field-settings-bb_woocommerce_memberships"><?php echo __( 'WooCommerce Memberships', 'wpforms-memberships' ); ?></label>
+					<select id="bb-membership-plans" data-placeholder="Choose Membership(s)..." multiple class="chosen-select">
+						<?php
 						$plans = wc_memberships_get_membership_plans();
 						if ( $plans ) {
 							foreach ( $plans as $plan ) {
@@ -76,20 +78,62 @@ class BB_WPForms_Memberships_Settings {
 								printf( '<option value="%s"%s>%s</option>', $plan->get_id(), $selected, $plan->get_name() );
 							}
 						}
-					}
-					?>
-				</select>
-			</div>
-			<?php
+						?>
+					</select>
+				</div>
+				<?php
 
-			// Membership Plan IDs.
-			wpforms_panel_field(
-				'text',
-				'settings',
-				'bb_woocommerce_memberships',
-				$instance->form_data,
-				''
-			);
+				// Membership Plan IDs.
+				wpforms_panel_field(
+					'text',
+					'settings',
+					'bb_woocommerce_memberships',
+					$instance->form_data,
+					''
+				);
+			}
+
+			// If LearnDash is active.
+			if ( function_exists( 'learndash_get_course_id' ) ) {
+
+				// Get saved course IDs.
+				$course_ids = array();
+				if ( isset( $instance->settings['bb_learndash_course_ids'] ) && ! empty( $instance->settings['bb_learndash_course_ids'] ) ) {
+					$course_ids = array_filter( array_map( 'trim', explode( ',', sanitize_text_field( $instance->settings['bb_learndash_course_ids'] ) ) ) );
+				}
+				?>
+				<div id="wpforms-panel-field-settings-bb_learndash_courses-wrap" class="wpforms-panel-field  wpforms-panel-field-select">
+					<label for="wpforms-panel-field-settings-bb_learndash_courses"><?php echo __( 'LearnDash Courses', 'wpforms-memberships' ); ?></label>
+					<select id="bb-learndash-courses" data-placeholder="Choose Course(s)..." multiple class="chosen-select">
+						<?php
+						$args = array(
+							'post_type'      => 'sfwd-courses',
+							'posts_per_page' => -1,
+							'post_status'    => 'publish',
+						);
+						$courses = new WP_Query( $args );
+						if ( $courses->have_posts() ) {
+							while ( $courses->have_posts() ) : $courses->the_post();
+								$selected = in_array( get_the_ID(), $course_ids ) ? ' selected' : '';
+								printf( '<option value="%s"%s>%s</option>', get_the_ID(), $selected, get_the_title() );
+							endwhile;
+						}
+						wp_reset_postdata();
+						?>
+					</select>
+				</div>
+				<?php
+
+				// Membership Plan IDs.
+				wpforms_panel_field(
+					'text',
+					'settings',
+					'bb_learndash_courses',
+					$instance->form_data,
+					''
+				);
+
+			}
 
 			// If Registration form.
 			if ( isset( $instance->form_data['meta']['template'] ) && ( 'user_registration' === $instance->form_data['meta']['template'] ) ) {
@@ -109,12 +153,20 @@ class BB_WPForms_Memberships_Settings {
 
 		echo '</div>';
 
+		// If Woo Memberships or LearnDash.
+		if ( function_exists( 'wc_memberships_get_membership_plans' ) || function_exists( 'learndash_get_course_id' ) ) {
 		?>
 		<style>
-			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_membership-wrap {
+			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_memberships-wrap,
+			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_learndash_courses-wrap {
 				margin-bottom: 0;
 			}
-			#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_woocommerce_memberships {
+			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_memberships-wrap + #wpforms-panel-field-settings-bb_woocommerce_memberships-wrap,
+			#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_learndash_courses-wrap + #wpforms-panel-field-settings-bb_learndash_courses-wrap {
+				margin-bottom: 24px;
+			}
+			#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_woocommerce_memberships,
+			#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_learndash_courses {
 				margin: 0;
 				border-top: none;
 				opacity: .5;
@@ -123,39 +175,48 @@ class BB_WPForms_Memberships_Settings {
 		<script>
 			jQuery(document).ready(function($) {
 				// Get our inputs.
-				var $input  = $( '#wpforms-panel-field-settings-bb_woocommerce_memberships' );
-				var $select = $( '#bb-membership-plans' );
-				// Set input to readonly.
-				$input.prop( 'readonly', true );
-				// Set select field to multiple.
-				$select.prop( 'multiple', true );
-				// Start with empty selected items.
-				var items = [];
-				// If we have a value.
-				if ( $input.val() ) {
-					// Build array, trimming any spaces.
-					var items = $.map( $input.val().split( ',' ), $.trim );
-				}
-				// Loop through em.
-				items.forEach(function(plan) {
-					// Check if option exists.
-					var option = $select.find( 'option[value="' + plan + '"]' );
-					if ( option.length ) {
-						// Select it.
-						option.prop( 'selected', true );
+				var $wooInput        = $( '#wpforms-panel-field-settings-bb_woocommerce_memberships' );
+				var $wooSelect       = $( '#bb-membership-plans' );
+				var $learndashInput  = $( '#wpforms-panel-field-settings-bb_learndash_courses' );
+				var $learndashSelect = $( '#bb-learndash-courses' );
+
+				doMembershipStuff( $wooInput, $wooSelect );
+				doMembershipStuff( $learndashInput, $learndashSelect );
+
+				function doMembershipStuff( $input, $select ) {
+					// Set input to readonly.
+					$input.prop( 'readonly', true );
+					// Set select field to multiple.
+					$select.prop( 'multiple', true );
+					// Start with empty selected items.
+					var items = [];
+					// If we have a value.
+					if ( $input.val() ) {
+						// Build array, trimming any spaces.
+						var items = $.map( $input.val().split( ',' ), $.trim );
 					}
-				});
-				// Initiate Chosen.
-				$select.chosen({
-					width: '100%',
-				});
-				// Update our hidden field when select is changed.
-				$select.on( 'change', function( event, params ) {
-					$input.val( $(this).val() );
-				});
+					// Loop through em.
+					items.forEach(function(plan) {
+						// Check if option exists.
+						var option = $select.find( 'option[value="' + plan + '"]' );
+						if ( option.length ) {
+							// Select it.
+							option.prop( 'selected', true );
+						}
+					});
+					// Initiate Chosen.
+					$select.chosen({
+						width: '100%',
+					});
+					// Update our hidden field when select is changed.
+					$select.on( 'change', function( event, params ) {
+						$input.val( $(this).val() );
+					});
+				}
 			});
 		</script>
 		<?php
+		}
 	}
 
 	/**
