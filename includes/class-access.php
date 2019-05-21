@@ -237,7 +237,7 @@ class BB_WPForms_Memberships_Access {
 			return false;
 		}
 		// Bail activation method is set, since the user will not be activated at this point if something is set.
-		if ( isset( $form_data['settings']['registration_activation_method'] ) && $form_data['settings']['registration_activation_method'] ) {
+		if ( isset( $form_data['settings']['registration_activation'] ) && $form_data['settings']['registration_activation'] ) {
 			return false;
 		}
 		return true;
