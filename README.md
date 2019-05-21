@@ -1,5 +1,5 @@
 # WP Forms Memberships
-Add users to WooCommerce Memberships with WPForms.
+Create seemless onboarding for your users! Add users to WooCommerce Memberships and LearnDash Courses with WPForms, including user registration (via WPForms User Registration add-on), auto-login, and more.
 
 ![Memberships settings field](assets/images/field.png)
 
