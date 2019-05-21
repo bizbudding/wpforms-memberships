@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 (5/20/19)
+* Added: Support for LearnDash Courses.
+* Added: Auto login setting on registration forms.
+
 ## 0.3.1 (5/16/19)
 * Fixed: Prefill and make the email field readonly when bypassing registration for logged in users.
 
