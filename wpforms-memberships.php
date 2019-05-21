@@ -3,7 +3,7 @@
 /**
  * Plugin Name:     WPForms Memberships
  * Plugin URI:      https://bizbudding.com
- * Description:     Add users to WooCommerce Memberships with WPForms.
+ * Description:     Add users to WooCommerce Memberships and LearnDash Courses with WPForms.
  * Version:         0.4.1
  *
  * Author:          BizBudding, Mike Hemberger
