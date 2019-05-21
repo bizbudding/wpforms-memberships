@@ -1,0 +1,20 @@
+#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_memberships-wrap,
+#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_learndash_courses-wrap {
+	margin-bottom: 0;
+}
+#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_woocommerce_memberships-wrap + #wpforms-panel-field-settings-bb_woocommerce_memberships-wrap,
+#wpforms-builder .wpforms-panel-field#wpforms-panel-field-settings-bb_learndash_courses-wrap + #wpforms-panel-field-settings-bb_learndash_courses-wrap {
+	margin-bottom: 24px;
+}
+#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_woocommerce_memberships,
+#wpforms-builder .wpforms-panel-field #wpforms-panel-field-settings-bb_learndash_courses {
+	margin: 0;
+	border-top: none;
+	opacity: .5;
+}
+#wpforms-builder .bb-wpforms-field-note {
+	color: rgba(0,0,0,.6);
+	font-size:100%;
+	margin-top:-12px;
+	margin-left:26px;
+}
